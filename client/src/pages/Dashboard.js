@@ -32,7 +32,6 @@ const Dashboard = () => {
       const res = await axios.get('/api/internships/employer/me');
       setInternships(res.data);
 
-      // If there are internships, fetch applications for the first one
       if (res.data.length > 0) {
         setSelectedInternship(res.data[0]._id);
         await fetchApplications(res.data[0]._id);
@@ -48,7 +47,11 @@ const Dashboard = () => {
   const fetchApplications = async (internshipId) => {
     try {
       const res = await axios.get(`/api/applications/internship/${internshipId}`);
-      setApplications({ ...applications, [internshipId]: res.data });
+      console.log('Fetched applications:', res.data); // For debugging
+      setApplications({
+        ...applications,
+        [internshipId]: Array.isArray(res.data) ? res.data : [],
+      });
     } catch (err) {
       console.error('Error fetching applications:', err);
     }
@@ -56,8 +59,7 @@ const Dashboard = () => {
 
   const handleInternshipSelect = async (internshipId) => {
     setSelectedInternship(internshipId);
-    
-    // Check if applications for this internship are already loaded
+
     if (!applications[internshipId]) {
       await fetchApplications(internshipId);
     }
@@ -66,13 +68,12 @@ const Dashboard = () => {
   const handleApplicationStatus = async (applicationId, status) => {
     try {
       await axios.put(`/api/applications/${applicationId}`, { status });
-      
-      // Update local state
-      if (selectedInternship) {
-        const updatedApplications = applications[selectedInternship].map(app => 
+
+      if (selectedInternship && Array.isArray(applications[selectedInternship])) {
+        const updatedApplications = applications[selectedInternship].map(app =>
           app._id === applicationId ? { ...app, status } : app
         );
-        
+
         setApplications({
           ...applications,
           [selectedInternship]: updatedApplications
@@ -92,7 +93,7 @@ const Dashboard = () => {
     try {
       await axios.delete(`/api/internships/${internshipId}`);
       setInternships(internships.filter(internship => internship._id !== internshipId));
-      
+
       if (selectedInternship === internshipId) {
         setSelectedInternship(null);
       }
@@ -102,7 +103,6 @@ const Dashboard = () => {
     }
   };
 
-  // Format the date
   const formatDate = (dateString) => {
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
     return new Date(dateString).toLocaleDateString(undefined, options);
@@ -114,20 +114,20 @@ const Dashboard = () => {
     <div className="dashboard-page">
       <div className="container">
         <h1>Employer Dashboard</h1>
-        
+
         <div className="dashboard-actions">
           <Link to="/post-internship" className="btn-primary">
             Post New Internship
           </Link>
         </div>
-        
+
         {error && <div className="alert alert-danger">{error}</div>}
-        
+
         {internships.length === 0 ? (
           <div className="empty-state">
             <h3>You haven't posted any internships yet</h3>
             <p>
-              <Link to="/post-internship">Create your first internship posting</Link> to start 
+              <Link to="/post-internship">Create your first internship posting</Link> to start
               receiving applications.
             </p>
           </div>
@@ -136,7 +136,7 @@ const Dashboard = () => {
             <div className="internships-list">
               <h2>Your Internships</h2>
               {internships.map((internship) => (
-                <div 
+                <div
                   key={internship._id}
                   className={`internship-item ${selectedInternship === internship._id ? 'active' : ''}`}
                   onClick={() => handleInternshipSelect(internship._id)}
@@ -147,7 +147,7 @@ const Dashboard = () => {
                     <Link to={`/internship/${internship._id}`} className="btn-secondary btn-sm">
                       View
                     </Link>
-                    <button 
+                    <button
                       onClick={(e) => {
                         e.stopPropagation();
                         handleDeleteInternship(internship._id);
@@ -160,61 +160,62 @@ const Dashboard = () => {
                 </div>
               ))}
             </div>
-            
+
             <div className="applications-panel">
               <h2>Applications</h2>
-              
+
               {!selectedInternship ? (
                 <p>Select an internship to view applications</p>
-              ) : applications[selectedInternship]?.length === 0 ? (
+              ) : Array.isArray(applications[selectedInternship]) && applications[selectedInternship].length === 0 ? (
                 <p>No applications received for this internship yet.</p>
               ) : (
                 <div className="applications-list">
-                  {applications[selectedInternship]?.map((application) => (
-                    <div key={application._id} className="application-item">
-                      <div className="applicant-info">
-                        <h3>{application.applicant.name}</h3>
-                        <p>Email: {application.applicant.email}</p>
-                        {application.applicant.bio && (
-                          <p>Bio: {application.applicant.bio}</p>
+                  {Array.isArray(applications[selectedInternship]) &&
+                    applications[selectedInternship].map((application) => (
+                      <div key={application._id} className="application-item">
+                        <div className="applicant-info">
+                          <h3>{application.applicant.name}</h3>
+                          <p>Email: {application.applicant.email}</p>
+                          {application.applicant.bio && <p>Bio: {application.applicant.bio}</p>}
+                        </div>
+
+                        {application.coverLetter && (
+                          <div className="cover-letter">
+                            <h4>Cover Letter</h4>
+                            <p>{application.coverLetter}</p>
+                          </div>
                         )}
-                      </div>
-                      
-                      {application.coverLetter && (
-                        <div className="cover-letter">
-                          <h4>Cover Letter</h4>
-                          <p>{application.coverLetter}</p>
-                        </div>
-                      )}
-                      
-                      <div className="application-status">
-                        <h4>Status: {application.status.charAt(0).toUpperCase() + application.status.slice(1)}</h4>
-                        <div className="status-actions">
-                          <button 
-                            onClick={() => handleApplicationStatus(application._id, 'reviewed')}
-                            className={`btn-sm ${application.status === 'reviewed' ? 'active' : ''}`}
-                            disabled={application.status === 'reviewed'}
-                          >
-                            Mark as Reviewed
-                          </button>
-                          <button 
-                            onClick={() => handleApplicationStatus(application._id, 'accepted')}
-                            className={`btn-success btn-sm ${application.status === 'accepted' ? 'active' : ''}`}
-                            disabled={application.status === 'accepted'}
-                          >
-                            Accept
-                          </button>
-                          <button 
-                            onClick={() => handleApplicationStatus(application._id, 'rejected')}
-                            className={`btn-danger btn-sm ${application.status === 'rejected' ? 'active' : ''}`}
-                            disabled={application.status === 'rejected'}
-                          >
-                            Reject
-                          </button>
+
+                        <div className="application-status">
+                          <h4>
+                            Status: {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
+                          </h4>
+                          <div className="status-actions">
+                            <button
+                              onClick={() => handleApplicationStatus(application._id, 'reviewed')}
+                              className={`btn-sm ${application.status === 'reviewed' ? 'active' : ''}`}
+                              disabled={application.status === 'reviewed'}
+                            >
+                              Mark as Reviewed
+                            </button>
+                            <button
+                              onClick={() => handleApplicationStatus(application._id, 'accepted')}
+                              className={`btn-success btn-sm ${application.status === 'accepted' ? 'active' : ''}`}
+                              disabled={application.status === 'accepted'}
+                            >
+                              Accept
+                            </button>
+                            <button
+                              onClick={() => handleApplicationStatus(application._id, 'rejected')}
+                              className={`btn-danger btn-sm ${application.status === 'rejected' ? 'active' : ''}`}
+                              disabled={application.status === 'rejected'}
+                            >
+                              Reject
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               )}
             </div>
@@ -225,4 +226,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard; 
+export default Dashboard;
