@@ -12,7 +12,13 @@ dotenv.config();
 const app = express();
 
 // Middleware
-app.use(cors());
+
+app.use(cors({
+  origin: 'https://social-address.vercel.app', 
+  credentials: true 
+}));
+
+
 app.use(express.json());
 
 // Database connection
