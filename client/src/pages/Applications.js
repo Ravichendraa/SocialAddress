@@ -27,7 +27,7 @@ const Applications = () => {
   const fetchApplications = async () => {
     try {
       setLoading(true);
-      const res = await axios.get('/api/applications/me');
+      const res = await axios.get('https://socialaddress-manoj-backend.onrender.com/api/applications/me');
       setApplications(res.data);
       setError(null);
     } catch (err) {

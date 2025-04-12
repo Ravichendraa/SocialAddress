@@ -48,7 +48,7 @@ const PostInternship = () => {
     
     try {
       setLoading(true);
-      await axios.post('/api/internships', formData);
+      await axios.post('https://socialaddress-manoj-backend.onrender.com/api/internships', formData);
       navigate('/dashboard');
     } catch (err) {
       setFormError(err.response?.data?.message || 'Error creating internship');

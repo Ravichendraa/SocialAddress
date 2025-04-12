@@ -23,7 +23,7 @@ const InternshipDetails = () => {
   const fetchInternship = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`/api/internships/${id}`);
+      const res = await axios.get(`https://socialaddress-manoj-backend.onrender.com/api/internships/${id}`);
       setInternship(res.data);
       setError(null);
     } catch (err) {
@@ -36,7 +36,7 @@ const InternshipDetails = () => {
 
   const checkApplicationStatus = async () => {
     try {
-      const res = await axios.get('/api/applications/me');
+      const res = await axios.get('https://socialaddress-manoj-backend.onrender.com/api/applications/me');
       const application = res.data.find(app => app.internship._id === id);
       if (application) {
         setApplicationStatus(application.status);
@@ -55,7 +55,7 @@ const InternshipDetails = () => {
     }
     
     try {
-      await axios.post('/api/applications', {
+      await axios.post('https://socialaddress-manoj-backend.onrender.com/api/applications', {
         internshipId: id,
         coverLetter
       });

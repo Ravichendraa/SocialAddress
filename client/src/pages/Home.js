@@ -19,7 +19,7 @@ const Home = () => {
   const fetchInternships = async () => {
     try {
       setLoading(true);
-      let url = `/api/internships?sort=${sort}`;
+      let url = `https://socialaddress-manoj-backend.onrender.com/api/internships?sort=${sort}`;
       
       if (location) {
         url += `&location=${location}`;
