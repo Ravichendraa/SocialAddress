@@ -35,6 +35,7 @@ function App() {
               <Route path="/" element={<PostInternship />} />
               <Route path="/applications" element={<Applications />} />
               <Route path="*" element={<NotFound />} />
+              <Route path="/post-internship" element={<PostInternship />} />
             </Routes>
           </main>
           <Footer />
